@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rest-deployment
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: rest-app
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: rest-app
+    spec:
+      containers:
+        image: raghulms93/rest:v1
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /time
+            port: 8073
+            scheme: HTTP
+          initialDelaySeconds: 200
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 10
+        name: tnrtp-admin
+        ports:
+        - containerPort: 8073
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rest-service
+spec:
+  ports:
+  - name: http
+    port: 8073
+    protocol: TCP
+    targetPort: 8073
+  selector:
+    app: rest-app
+  sessionAffinity: None
+  type: ClusterIP
